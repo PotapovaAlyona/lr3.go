@@ -268,3 +268,38 @@ func BenchmarkHashTableInsert(b *testing.B) {
 		}
 	}
 }
+
+func TestSerializationJSONAndBinary(t *testing.T) {
+	arr := NewDynamicArray(2)
+	arr.Name = "arr_ser"
+	arr.AddToEnd("alpha")
+	arr.AddToEnd("beta")
+
+	// Текстовый формат (JSON)
+	if err := SaveJSON(arr, "arr_go.json"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("arr_go.json")
+
+	var arrJSON DynamicArray
+	if err := LoadJSON(&arrJSON, "arr_go.json"); err != nil {
+		t.Fatal(err)
+	}
+	if arrJSON.Size != 2 || arrJSON.Data[1] != "beta" {
+		t.Fatalf("ошибка десериализации JSON: %+v", arrJSON)
+	}
+
+	// Бинарный формат (Gob)
+	if err := SaveBinary(arr, "arr_go.bin"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("arr_go.bin")
+
+	var arrBin DynamicArray
+	if err := LoadBinary(&arrBin, "arr_go.bin"); err != nil {
+		t.Fatal(err)
+	}
+	if arrBin.Size != 2 || arrBin.Data[0] != "alpha" {
+		t.Fatalf("ошибка бинарной десериализации: %+v", arrBin)
+	}
+}
